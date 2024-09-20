@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventFormat {
+  ONLINE
+  PHYSICAL
+}
+
+enum UserRoles {
+  NORMAL
+  ORGANIZER
+  ADMIN
+}
+
+model Category {
+  id            String          @id @default(uuid())
+  name          String
+  EventCategory EventCategory[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("category")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  firstname    String
+  lastname     String
+  image        String?
+  phone        String?
+  email        String
+  password     String
+  Order        Order[]
+  role         UserRoles @default(NORMAL)
+  refreshToken String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("user")
+}
+
+model GuestUser {
+  id        String   @id @default(uuid())
+  firstname String
+  lastname  String
+  phone     String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Order     Order[]
+
+  @@map("guest_user")
+}
+
+model Organizer {
+  id        String   @id @default(uuid())
+  name      String
+  about     String
+  email     String
+  phone     String
+  facebook  String
+  instagram String
+  Event     Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organizer")
+}
+
+model Event {
+  id            String          @id @default(uuid())
+  organizerId   String
+  Organizer     Organizer       @relation(fields: [organizerId], references: [id])
+  name          String
+  description   String
+  image         String
+  tos           String
+  venueId       String
+  Venue         Venue           @relation(fields: [venueId], references: [id])
+  ticket        Ticket[]
+  startTime     DateTime
+  endTime       DateTime
+  startDate     DateTime
+  endDate       DateTime
+  Format        EventFormat
+  facebook      String
+  instagram     String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  EventCategory EventCategory[]
+  Order         Order[]
+
+  @@map("event")
+}
+
+model EventCategory {
+  id         String   @id @default(uuid())
+  eventId    String
+  Event      Event    @relation(fields: [eventId], references: [id])
+  categoryId String
+  Category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("event_category")
+}
+
+model Ticket {
+  id           String @id @default(uuid())
+  type         String
+  name         String
+  description  String
+  eventId      String
+  event        Event  @relation(fields: [eventId], references: [id])
+  quantity     Int
+  quantitySold Int    @default(0)
+
+  PurchasedTicket PurchasedTicket[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("ticket")
+}
+
+model Order {
+  id          String            @id @default(uuid())
+  userId      String?
+  User        User?             @relation(fields: [userId], references: [id])
+  guestUserId String?
+  GuestUser   GuestUser?        @relation(fields: [guestUserId], references: [id])
+  eventId     String
+  Event       Event             @relation(fields: [eventId], references: [id])
+  netAmount   Float
+  Tickets     PurchasedTicket[]
+  quantity    Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("order")
+}
+
+model PurchasedTicket {
+  id        String   @id @default(uuid()) //will encode this in QR
+  orderId   String
+  Order     Order    @relation(fields: [orderId], references: [id])
+  ticketId  String
+  Ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  scanCount Int      @default(0)
+  isValid   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("purchased_ticket")
+}
+
+model Venue {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  city      String
+  country   String
+  capacity  String
+  lat       String
+  lng       String
+  event     Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("venue")
+}
