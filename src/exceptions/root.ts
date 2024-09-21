@@ -16,4 +16,7 @@ export class HTTPException extends Error {
   }
 }
 
-export enum ErrorCode {}
+export enum ErrorCode {
+  UNPROCESSABLE_ENTITY = 1002,
+  INTERNAL_EXCEPTION = 2002,
+}

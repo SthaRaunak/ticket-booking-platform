@@ -6,6 +6,7 @@ import cors, { type CorsOptions } from "cors";
 import dotenv from "dotenv";
 import rootRouter from "./routes";
 import { PrismaClient } from "@prisma/client";
+import { errorMiddlware } from "./middlewares/error.middleware";
 
 /* configuration */
 
@@ -37,6 +38,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v0", rootRouter);
+
+app.use(errorMiddlware);
 
 /* server */
 const PORT = process.env.PORT || 4000;
