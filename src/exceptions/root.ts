@@ -17,6 +17,7 @@ export class HTTPException extends Error {
 }
 
 export enum ErrorCode {
-  UNPROCESSABLE_ENTITY = 1002,
-  INTERNAL_EXCEPTION = 2002,
+  UNPROCESSABLE_ENTITY = 1001,
+  INTERNAL_EXCEPTION = 2001,
+  USER_ALREADY_EXISTS = 3001,
 }

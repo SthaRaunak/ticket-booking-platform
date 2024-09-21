@@ -40,13 +40,15 @@ model User {
   lastname     String
   image        String?
   phone        String?
-  email        String
+  email        String    @unique
   password     String
   Order        Order[]
+  isVerified   Boolean   @default(false)
   role         UserRoles @default(NORMAL)
-  refreshToken String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  refreshToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user")
 }
