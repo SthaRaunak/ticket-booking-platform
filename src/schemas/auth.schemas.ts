@@ -7,4 +7,9 @@ export const registerUserSchema = z.object({
   password: z.string().min(6, "Password must be 6 characters long"),
 });
 
+export const loginUserSchema = z.object({
+  email: z.string().email("Invalid Email"),
+  password: z.string().trim().min(1, "Password is required"),
+});
+
 export type RegisterUser = z.infer<typeof registerUserSchema>;
