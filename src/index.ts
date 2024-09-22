@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import rootRouter from "./routes";
 import { PrismaClient } from "@prisma/client";
 import { errorMiddlware } from "./middlewares/error.middleware";
+import cookieParser from "cookie-parser";
 
 /* configuration */
 
@@ -16,6 +17,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
