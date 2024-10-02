@@ -3,6 +3,7 @@ import * as authController from "../controllers/auth.controller";
 import { validateRequest } from "../middlewares/validation.middleware";
 import { loginUserSchema, registerUserSchema } from "../schemas/auth.schemas";
 import { asyncHandler } from "../utils/asyncHandler";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -19,5 +20,9 @@ router
     validateRequest(loginUserSchema),
     asyncHandler(authController.loginUser)
   );
+
+router.route("/me").get(authMiddleware, asyncHandler(authController.me));
+
+router.route("/refresh").post(asyncHandler(authController.refresh));
 
 export default router;

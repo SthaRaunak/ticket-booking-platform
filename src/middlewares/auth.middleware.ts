@@ -10,7 +10,8 @@ export async function authMiddleware(
   next: NextFunction
 ) {
   try {
-    const accessToken = req.cookies.accessToken;
+    const accessToken = req.headers["authorization"] as string | undefined;
+
     if (!accessToken) {
       throw new Error();
     }

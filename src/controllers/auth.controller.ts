@@ -10,6 +10,12 @@ import { UnauthorizedException } from "../exceptions/Unauthorized";
 import jwt from "jsonwebtoken";
 import { InternalException } from "../exceptions/InternalException";
 
+const secureCookieOptions: CookieOptions = {
+  httpOnly: true,
+  sameSite: "strict",
+  secure: true,
+};
+
 const generateAccessAndRefreshToken = (userId: String) => {
   try {
     const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET!, {
@@ -31,6 +37,7 @@ const generateAccessAndRefreshToken = (userId: String) => {
     );
   }
 };
+
 const registerUser = async (
   req: Request,
   res: Response,
@@ -124,20 +131,85 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
 
   const response = new SuccessResponse(
     SucessCode.OK,
-    updatedUser,
+    {
+      ...updatedUser,
+      accessToken,
+    },
     "Successfuly Logged In User"
   );
 
-  const cookieOptions: CookieOptions = {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: true,
-  };
-
   return res
-    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, secureCookieOptions)
     .status(response.statusCode)
     .json(response);
 };
 
-export { registerUser, loginUser };
+const refresh = async (req: Request, res: Response, next: NextFunction) => {
+  const refreshToken = req.cookies.refreshToken as string | undefined;
+
+  if (!refreshToken) {
+    throw new UnauthorizedException(
+      "Refresh token doesn't exist",
+      ErrorCode.TOKEN_NOT_FOUND
+    );
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, process.env.JWT_SECRET!) as any;
+    const user = await prismaClient.user.findFirst({
+      where: {
+        id: payload.userId,
+      },
+      select: {
+        refreshToken: true,
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    if (refreshToken !== user?.refreshToken) {
+      throw new Error();
+    }
+    //currently implemented refresh token rotation ( still researching on the secure way with minimal possible queries and request )
+
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+      generateAccessAndRefreshToken(user.id);
+
+    const updatedUser = await prismaClient.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        refreshToken: newRefreshToken,
+      },
+    });
+
+    const response = new SuccessResponse(
+      200,
+      { accessToken: newAccessToken },
+      "Token refreshed successfully"
+    );
+
+    return res
+      .status(response.statusCode)
+      .cookie("refreshToken", newRefreshToken, secureCookieOptions)
+      .json(response);
+  } catch (err) {
+    throw new UnauthorizedException(
+      "Error validating refresh token",
+      ErrorCode.UNAUTHORIZED,
+      err
+    );
+  }
+};
+
+const me = async (req: Request, res: Response) => {
+  const { updatedAt, refreshToken, password, id, ...rest } = req.user!;
+  const response = new SuccessResponse(200, rest, "success");
+  res.status(response.statusCode).json(response);
+};
+
+export { registerUser, loginUser, me, refresh };

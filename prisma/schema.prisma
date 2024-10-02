@@ -47,8 +47,9 @@ model User {
   role         UserRoles @default(NORMAL)
   refreshToken String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Organizer Organizer?
 
   @@map("user")
 }
@@ -68,12 +69,14 @@ model GuestUser {
 
 model Organizer {
   id        String   @id @default(uuid())
+  userId    String   @unique
+  User      User     @relation(fields: [userId], references: [id])
   name      String
   about     String
   email     String
   phone     String
-  facebook  String
-  instagram String
+  facebook  String?
+  instagram String?
   Event     Event[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
