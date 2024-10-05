@@ -18,8 +18,8 @@ enum EventFormat {
   PHYSICAL
 }
 
-enum UserRoles {
-  NORMAL
+enum Roles {
+  USER
   ORGANIZER
   ADMIN
 }
@@ -35,23 +35,30 @@ model Category {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  firstname    String
-  lastname     String
-  image        String?
-  phone        String?
-  email        String    @unique
-  password     String
-  Order        Order[]
-  isVerified   Boolean   @default(false)
-  role         UserRoles @default(NORMAL)
-  refreshToken String?
-
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  Organizer Organizer?
+  id               String     @id @default(uuid())
+  firstname        String
+  lastname         String
+  image            String?
+  phone            String?
+  email            String     @unique
+  password         String
+  orders           Order[]
+  isVerified       Boolean    @default(false)
+  refreshToken     String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  organizationInfo Organizer?
+  roles            UserRole[]
 
   @@map("user")
+}
+
+model UserRole {
+  userId String
+  role   Roles  @default(USER)
+  User   User   @relation(fields: [userId], references: [id])
+
+  @@unique([role, userId])
 }
 
 model GuestUser {
@@ -62,7 +69,7 @@ model GuestUser {
   email     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Order     Order[]
+  orders    Order[]
 
   @@map("guest_user")
 }
@@ -132,9 +139,9 @@ model Ticket {
   quantity     Int
   quantitySold Int    @default(0)
 
-  PurchasedTicket PurchasedTicket[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  purchasedtickets PurchasedTicket[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@map("ticket")
 }
@@ -148,7 +155,7 @@ model Order {
   eventId     String
   Event       Event             @relation(fields: [eventId], references: [id])
   netAmount   Float
-  Tickets     PurchasedTicket[]
+  tickets     PurchasedTicket[]
   quantity    Int
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -179,7 +186,7 @@ model Venue {
   capacity  String
   lat       String
   lng       String
-  event     Event[]
+  events    Event[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -9,6 +9,7 @@ import { NotFoundException } from "../exceptions/NotFound";
 import { UnauthorizedException } from "../exceptions/Unauthorized";
 import jwt from "jsonwebtoken";
 import { InternalException } from "../exceptions/InternalException";
+import { formatRoles } from "../utils/format";
 
 const secureCookieOptions: CookieOptions = {
   httpOnly: true,
@@ -59,19 +60,27 @@ const registerUser = async (
   }
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
   const newUser = await prismaClient.user.create({
     data: {
       firstname,
       lastname,
       email,
       password: hashedPassword,
+      roles: {
+        create: {
+          role: "USER",
+        },
+      },
     },
     select: {
       firstname: true,
       lastname: true,
       email: true,
-      role: true,
+      roles: {
+        select: {
+          role: true,
+        },
+      },
       isVerified: true,
       createdAt: true,
     },
@@ -79,7 +88,10 @@ const registerUser = async (
 
   const response = new SuccessResponse(
     SucessCode.CREATED,
-    newUser,
+    {
+      ...newUser,
+      roles: formatRoles(newUser.roles),
+    },
     "Successfully Registered User"
   );
   return res.status(response.statusCode).json(response);
@@ -123,7 +135,11 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       firstname: true,
       lastname: true,
       email: true,
-      role: true,
+      roles: {
+        select: {
+          role: true,
+        },
+      },
       isVerified: true,
       createdAt: true,
     },
@@ -133,6 +149,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     SucessCode.OK,
     {
       ...updatedUser,
+      roles: formatRoles(updatedUser.roles),
       accessToken,
     },
     "Successfuly Logged In User"

@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { UnauthorizedException } from "../exceptions/Unauthorized";
 import { ErrorCode } from "../exceptions/root";
 import { prismaClient } from "..";
+import { formatRoles } from "../utils/format";
 
 export async function authMiddleware(
   req: Request,
@@ -17,18 +18,23 @@ export async function authMiddleware(
     }
 
     const jwtPayload = jwt.verify(accessToken, process.env.JWT_SECRET!) as any;
-
     const user = await prismaClient.user.findFirst({
       where: {
-        id: jwtPayload.id,
+        id: jwtPayload.userId,
+      },
+      include: {
+        roles: {
+          select: {
+            role: true,
+          },
+        },
       },
     });
 
     if (!user) {
       throw new Error();
     }
-
-    req.user = user;
+    req.user = { ...user, roles: formatRoles(user.roles) };
     next();
   } catch (err) {
     return next(
