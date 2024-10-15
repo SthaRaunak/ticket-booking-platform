@@ -1,8 +1,8 @@
 export class SuccessResponse {
-  statusCode: number;
+  statusCode: SucessCode;
   data: any;
   message: string;
-  constructor(statusCode: number, data: any, message: string = "Success") {
+  constructor(statusCode: SucessCode, data: any, message: string = "Success") {
     this.statusCode = statusCode;
     this.data = data;
     this.message = message;

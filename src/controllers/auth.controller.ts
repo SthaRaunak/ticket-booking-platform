@@ -205,7 +205,7 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
     });
 
     const response = new SuccessResponse(
-      200,
+      SucessCode.OK,
       { accessToken: newAccessToken },
       "Token refreshed successfully"
     );
@@ -225,8 +225,37 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
 
 const me = async (req: Request, res: Response) => {
   const { updatedAt, refreshToken, password, id, ...rest } = req.user!;
-  const response = new SuccessResponse(200, rest, "success");
+  const response = new SuccessResponse(SucessCode.OK, rest, "success");
   res.status(response.statusCode).json(response);
 };
 
-export { registerUser, loginUser, me, refresh };
+const logoutUser = async (req: Request, res: Response) => {
+  // currently client side token removal until blacklist token mechanism in place , here we will invalidate the refresh token and clear the cookie
+
+  const { id } = req.user!;
+
+  const updatedUser = await prismaClient.user.update({
+    where: {
+      id,
+    },
+    data: {
+      refreshToken: null,
+    },
+    select: { id: true },
+  });
+
+  const response = new SuccessResponse(
+    SucessCode.OK,
+    {
+      success: true,
+    },
+    "User successfully logged out!"
+  );
+
+  return res
+    .clearCookie("refreshToken", secureCookieOptions)
+    .status(response.statusCode)
+    .json(response);
+};
+
+export { registerUser, loginUser, me, refresh, logoutUser };

@@ -22,6 +22,10 @@ router
     asyncHandler(authController.loginUser)
   );
 
+router
+  .route("/logout")
+  .get(authMiddleware, asyncHandler(authController.logoutUser));
+
 router.route("/me").get(authMiddleware, asyncHandler(authController.me));
 
 router.route("/refresh").post(asyncHandler(authController.refresh));
