@@ -99,16 +99,20 @@ model Event {
   description   String
   image         String
   tos           String
-  venueId       String
-  Venue         Venue           @relation(fields: [venueId], references: [id])
+  // venueId       String
+  // Venue         Venue           @relation(fields: [venueId], references: [id])
+  venue         String
+  address       String
+  lat           String
+  lng           Decimal 
   ticket        Ticket[]
   startTime     DateTime
   endTime       DateTime
   startDate     DateTime
   endDate       DateTime
   Format        EventFormat
-  facebook      String
-  instagram     String
+  facebook      String?
+  instagram     String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   EventCategory EventCategory[]
@@ -130,15 +134,15 @@ model EventCategory {
 }
 
 model Ticket {
-  id           String @id @default(uuid())
-  type         String
-  name         String
-  description  String
-  eventId      String
-  event        Event  @relation(fields: [eventId], references: [id])
-  quantity     Int
-  quantitySold Int    @default(0)
-
+  id               String            @id @default(uuid())
+  type             String
+  name             String
+  description      String
+  eventId          String
+  event            Event             @relation(fields: [eventId], references: [id])
+  quantity         Int
+  quantitySold     Int               @default(0)
+  price            Float
   purchasedtickets PurchasedTicket[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -177,18 +181,20 @@ model PurchasedTicket {
   @@map("purchased_ticket")
 }
 
-model Venue {
-  id        String   @id @default(uuid())
-  name      String
-  address   String
-  city      String
-  country   String
-  capacity  String
-  lat       String
-  lng       String
-  events    Event[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+//will implement venue later when we have sufficient data (for now will stick to address and lat and lng) in event it selfd
 
-  @@map("venue")
-}
+// model Venue {
+//   id        String   @id @default(uuid())
+//   name      String
+//   address   String
+//   city      String
+//   country   String
+//   capacity  String
+//   lat       String
+//   lng       String
+//   events    Event[]
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("venue")
+// }
