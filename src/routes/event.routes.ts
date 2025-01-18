@@ -21,14 +21,26 @@ router
     asyncHandler(eventController.createEvent)
   );
 
-// router
-//   .route("/:eventId/ticket")
-//   .post(
-//     authMiddleware,
-//     RBAC("ORGANIZER"),
-//     validateRequest(CreateTicketSchema),
-//     asyncHandler()
-//   );
+router
+  .route("/:eventId/tickets")
+  .post(
+    authMiddleware,
+    RBAC("ORGANIZER"),
+    validateRequest(CreateTicketSchema),
+    asyncHandler(eventController.createTickets)
+  );
+
+router
+  .route("/:eventId/:ticketId")
+  .delete(
+    authMiddleware,
+    RBAC("ORGANIZER"),
+    asyncHandler(eventController.deleteTicket)
+  );
+
+router
+  .route("/:eventId/tickets")
+  .get(asyncHandler(eventController.getTicketsByEventId));
 
 router
   .route("/category")
@@ -38,5 +50,7 @@ router
     validateRequest(CreateCategorySchema),
     asyncHandler(eventController.createCategory)
   );
+
+router.route("/").get(asyncHandler(eventController.getEvents));
 
 export default router;

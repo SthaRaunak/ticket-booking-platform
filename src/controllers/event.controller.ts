@@ -1,14 +1,16 @@
 import z from "zod";
-import { SuccessResponse, SucessCode } from "../utils/sucessResponse";
+import { SuccessResponse, SuccessCode } from "../utils/sucessResponse";
 import { prismaClient } from "..";
 import { Request, Response, NextFunction } from "express";
 import {
   CreateCategorySchema,
   CreateEventSchema,
+  CreateTicketSchema,
 } from "../schemas/event.schemas";
 import { UnauthorizedException } from "../exceptions/Unauthorized";
 import { ErrorCode } from "../exceptions/root";
 import { BadRequestException } from "../exceptions/BadRequest";
+import { NotFoundException } from "../exceptions/NotFound";
 
 const createEvent = async (req: Request, res: Response, next: NextFunction) => {
   const {
@@ -93,7 +95,7 @@ const createEvent = async (req: Request, res: Response, next: NextFunction) => {
   });
 
   const response = new SuccessResponse(
-    SucessCode.CREATED,
+    SuccessCode.CREATED,
     event,
     "Event successfully created"
   );
@@ -122,7 +124,7 @@ const createCategory = async (
   });
 
   const response = new SuccessResponse(
-    SucessCode.CREATED,
+    SuccessCode.CREATED,
     category,
     "Category successfully created."
   );
@@ -130,4 +132,228 @@ const createCategory = async (
   return res.status(response.statusCode).json(response);
 };
 
-export { createEvent, createCategory };
+const createTickets = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { tickets } = req.body as z.infer<typeof CreateTicketSchema>;
+  const { eventId } = req.params;
+  const { id: userId } = req.user!;
+
+  const event = await prismaClient.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      organizerId: true,
+    },
+  });
+
+  if (!event) {
+    throw new NotFoundException("Event not found", ErrorCode.NOT_FOUND);
+  }
+
+  const organizer = await prismaClient.organizer.findFirst({
+    where: {
+      id: event.organizerId,
+    },
+    select: {
+      id: true,
+      userId: true,
+    },
+  });
+
+  if (organizer?.userId !== userId) {
+    throw new UnauthorizedException(
+      "You are not allowed to create tickets for this event.",
+      ErrorCode.UNAUTHORIZED
+    );
+  }
+
+  const { ticket: createdTickets } = await prismaClient.event.update({
+    where: {
+      id: eventId,
+    },
+    data: {
+      ticket: {
+        createMany: {
+          data: tickets,
+        },
+      },
+    },
+    select: {
+      ticket: {
+        select: {
+          name: true,
+          description: true,
+          quantity: true,
+          price: true,
+        },
+      },
+    },
+  });
+
+  const response = new SuccessResponse(
+    SuccessCode.CREATED,
+    createdTickets,
+    "Tickets for event succesfully created."
+  );
+
+  return res.status(response.statusCode).json(response);
+};
+
+const deleteTicket = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { eventId, ticketId } = req.params;
+  const { id: userId } = req.user!;
+
+  const event = await prismaClient.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      organizerId: true,
+    },
+  });
+
+  if (!event) {
+    throw new NotFoundException("Event not found", ErrorCode.NOT_FOUND);
+  }
+
+  const organizer = await prismaClient.organizer.findFirst({
+    where: {
+      id: event.organizerId,
+    },
+    select: {
+      id: true,
+      userId: true,
+    },
+  });
+
+  if (organizer?.userId != userId) {
+    throw new UnauthorizedException(
+      "You are not allowed to delete tickets for this event.",
+      ErrorCode.UNAUTHORIZED
+    );
+  }
+
+  await prismaClient.ticket.delete({
+    where: {
+      id: ticketId,
+    },
+  });
+
+  const response = new SuccessResponse(
+    SuccessCode.NO_CONTENT,
+    {},
+    "Ticket successfully deleted."
+  );
+
+  res.status(response.statusCode).send(response);
+};
+
+const getTicketsByEventId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { eventId } = req.params;
+
+  const event = await prismaClient.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!event) {
+    throw new NotFoundException("Event not found", ErrorCode.TOKEN_NOT_FOUND);
+  }
+
+  const tickets = await prismaClient.ticket.findMany({
+    where: {
+      eventId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      price: true,
+      quantity: true,
+    },
+  });
+
+  const response = new SuccessResponse(
+    SuccessCode.OK,
+    tickets,
+    "Tickets for the event succesfully fetched."
+  );
+
+  return res.status(response.statusCode).json(response);
+};
+
+const getEvents = async (req: Request, res: Response, next: NextFunction) => {
+  const { limit, offset } = req.query;
+  const eventCount = await prismaClient.event.count();
+  const events = await prismaClient.event.findMany({
+    skip: Number(offset) || 0,
+    take: Number(limit) || 10,
+    orderBy: {
+      ticket: {},
+    },
+    select: {
+      name: true,
+      image: true,
+      venue: true,
+      address: true,
+      EventCategory: {
+        select: {
+          Category: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      ticket: {
+        select: {
+          price: true,
+        },
+      },
+    },
+  });
+
+  const transformedEvents = events.map((event) => {
+    const { EventCategory, ticket, ...rest } = {
+      ...event,
+      categories: event.EventCategory.map((item) => item.Category.name),
+      startsFrom: Math.min(...event.ticket.map((item) => item.price)), //min ticket price
+    };
+    return rest;
+  });
+
+  const response = new SuccessResponse(
+    SuccessCode.OK,
+    { count: eventCount, events: transformedEvents },
+    "Events succesfully fetched."
+  );
+
+  return res.status(response.statusCode).json(response);
+};
+
+export {
+  createEvent,
+  createCategory,
+  createTickets,
+  getTicketsByEventId,
+  getEvents,
+  deleteTicket,
+};

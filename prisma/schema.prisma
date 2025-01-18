@@ -104,7 +104,7 @@ model Event {
   venue         String
   address       String
   lat           String
-  lng           Decimal 
+  lng           String
   ticket        Ticket[]
   startTime     DateTime
   endTime       DateTime
@@ -135,7 +135,6 @@ model EventCategory {
 
 model Ticket {
   id               String            @id @default(uuid())
-  type             String
   name             String
   description      String
   eventId          String

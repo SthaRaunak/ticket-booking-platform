@@ -4,7 +4,7 @@ import { BadRequestException } from "../exceptions/BadRequest";
 import { ErrorCode } from "../exceptions/root";
 import bcrypt from "bcrypt";
 import { SALT_ROUNDS } from "../utils/constants";
-import { SuccessResponse, SucessCode } from "../utils/sucessResponse";
+import { SuccessResponse, SuccessCode } from "../utils/sucessResponse";
 import { NotFoundException } from "../exceptions/NotFound";
 import { UnauthorizedException } from "../exceptions/Unauthorized";
 import jwt from "jsonwebtoken";
@@ -87,7 +87,7 @@ const registerUser = async (
   });
 
   const response = new SuccessResponse(
-    SucessCode.CREATED,
+    SuccessCode.CREATED,
     {
       ...newUser,
       roles: formatRoles(newUser.roles),
@@ -109,7 +109,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   if (!user) {
     throw new NotFoundException(
       "Invalid email or password",
-      ErrorCode.USER_ALREADY_EXISTS
+      ErrorCode.USER_DOESNT_EXIST
     );
   }
 
@@ -118,7 +118,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   if (!IsPasswordCorrect) {
     throw new UnauthorizedException(
       "Incorrect password",
-      ErrorCode.USER_ALREADY_EXISTS
+      ErrorCode.UNAUTHORIZED
     );
   }
 
@@ -146,7 +146,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   });
 
   const response = new SuccessResponse(
-    SucessCode.OK,
+    SuccessCode.OK,
     {
       ...updatedUser,
       roles: formatRoles(updatedUser.roles),
@@ -205,7 +205,7 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
     });
 
     const response = new SuccessResponse(
-      SucessCode.OK,
+      SuccessCode.OK,
       { accessToken: newAccessToken },
       "Token refreshed successfully"
     );
@@ -225,7 +225,7 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
 
 const me = async (req: Request, res: Response) => {
   const { updatedAt, refreshToken, password, id, ...rest } = req.user!;
-  const response = new SuccessResponse(SucessCode.OK, rest, "success");
+  const response = new SuccessResponse(SuccessCode.OK, rest, "success");
   res.status(response.statusCode).json(response);
 };
 
@@ -245,7 +245,7 @@ const logoutUser = async (req: Request, res: Response) => {
   });
 
   const response = new SuccessResponse(
-    SucessCode.OK,
+    SuccessCode.OK,
     {
       success: true,
     },

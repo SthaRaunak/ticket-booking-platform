@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prismaClient } from "..";
-import { SuccessResponse, SucessCode } from "../utils/sucessResponse";
+import { SuccessCode, SuccessResponse } from "../utils/sucessResponse";
 import { BadRequestException } from "../exceptions/BadRequest";
 import { ErrorCode } from "../exceptions/root";
 import { makeOrganizerSchema } from "../schemas/organizer.schema";
@@ -70,12 +70,26 @@ const makeOrganizer = async (
   });
 
   const response = new SuccessResponse(
-    SucessCode.CREATED,
+    SuccessCode.CREATED,
     updatedUser.organizationInfo,
     "Successfuly made user an organizer"
   );
 
   return res.status(response.statusCode).json(response);
+};
+
+const updateOrganizer = (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.query as { id: string };
+  const updateValues = req.body;
+
+  const updatedOrganizer = prismaClient.organizer.update({
+    where: {
+      id,
+    },
+    data: {
+      ...updateValues,
+    },
+  });
 };
 
 export { makeOrganizer };

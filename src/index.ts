@@ -2,7 +2,7 @@ import express from "express";
 import { SuccessResponse } from "./utils/sucessResponse";
 import helmet from "helmet";
 import morgan from "morgan";
-import cors, { type CorsOptions } from "cors";
+import cors from "cors";
 import dotenv from "dotenv";
 import rootRouter from "./routes";
 import { PrismaClient } from "@prisma/client";
@@ -33,12 +33,6 @@ export const prismaClient = new PrismaClient({
 /* configuration */
 
 /* route */
-app.get("/", (req, res) => {
-  res
-    .status(200)
-    .json(new SuccessResponse(200, { data: "hello world" }, "success"));
-});
-
 app.use("/api/v0", rootRouter);
 
 app.use(errorMiddlware);

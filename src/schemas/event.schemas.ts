@@ -1,5 +1,17 @@
 import { EventFormat } from "@prisma/client";
+import e from "express";
 import z from "zod";
+
+export const TicketSchema = z.object({
+  name: z.string().trim().min(1, "Ticket name is required."),
+  description: z.string().trim().min(1, "Ticket description is required."),
+  quantity: z.number().int().gte(0, "Invalid quantity"),
+  price: z.number().gt(0, "Invalid price"),
+});
+
+export const CreateTicketSchema = z.object({
+  tickets: z.array(TicketSchema).nonempty("At least one ticket is required."),
+});
 
 export const CreateEventSchema = z.object({
   name: z.string().trim().min(1, "Event name is required."),

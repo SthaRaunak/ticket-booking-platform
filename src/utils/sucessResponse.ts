@@ -1,14 +1,14 @@
 export class SuccessResponse {
-  statusCode: SucessCode;
+  statusCode: SuccessCode;
   data: any;
   message: string;
-  constructor(statusCode: SucessCode, data: any, message: string = "Success") {
+  constructor(statusCode: SuccessCode, data: any, message: string = "Success") {
     this.statusCode = statusCode;
     this.data = data;
     this.message = message;
   }
 }
-export enum SucessCode {
+export enum SuccessCode {
   OK = 200,
   CREATED = 201,
   ACCEPTED = 202,
