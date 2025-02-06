@@ -1,41 +1,16 @@
-import express from "express";
-import { SuccessResponse } from "./utils/sucessResponse";
-import helmet from "helmet";
-import morgan from "morgan";
-import cors from "cors";
 import dotenv from "dotenv";
-import rootRouter from "./routes";
 import { PrismaClient } from "@prisma/client";
-import { errorMiddlware } from "./middlewares/error.middleware";
-import cookieParser from "cookie-parser";
+import { createApp } from "./app";
 
 /* configuration */
 
 dotenv.config();
 
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
-
-app.use(morgan("dev"));
-
-app.use(cors());
+export const app = createApp();
 
 export const prismaClient = new PrismaClient({
   log: ["query"],
 });
-
-/* configuration */
-
-/* route */
-app.use("/api/v0", rootRouter);
-
-app.use(errorMiddlware);
 
 /* server */
 const PORT = process.env.PORT || 4000;

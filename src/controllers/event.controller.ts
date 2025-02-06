@@ -307,13 +307,14 @@ const getEvents = async (req: Request, res: Response, next: NextFunction) => {
     skip: Number(offset) || 0,
     take: Number(limit) || 10,
     orderBy: {
-      ticket: {},
+      startDate: "asc",
     },
     select: {
       name: true,
       image: true,
       venue: true,
       address: true,
+      startDate: true,
       EventCategory: {
         select: {
           Category: {
@@ -335,7 +336,7 @@ const getEvents = async (req: Request, res: Response, next: NextFunction) => {
     const { EventCategory, ticket, ...rest } = {
       ...event,
       categories: event.EventCategory.map((item) => item.Category.name),
-      startsFrom: Math.min(...event.ticket.map((item) => item.price)), //min ticket price
+      startsFrom: Math.min(...event.ticket.map((item) => item.price)) || 0, //min ticket price
     };
     return rest;
   });
@@ -349,6 +350,59 @@ const getEvents = async (req: Request, res: Response, next: NextFunction) => {
   return res.status(response.statusCode).json(response);
 };
 
+const getEventById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { eventId } = req.params;
+
+  // todo: create a middleware to validate params
+  if (!eventId) {
+    throw new BadRequestException(
+      "Event id is required",
+      ErrorCode.BAD_REQUEST
+    );
+  }
+
+  const event = await prismaClient.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      image: true,
+      venue: true,
+      address: true,
+      startDate: true,
+      endDate: true,
+      startTime: true,
+      endTime: true,
+      Format: true,
+      lat: true,
+      lng: true,
+      facebook: true,
+      instagram: true,
+      Organizer: true,
+      tos: true,
+    },
+  });
+
+  if (!event) {
+    throw new NotFoundException("Event not found", ErrorCode.NOT_FOUND);
+  }
+
+  const response = new SuccessResponse(
+    SuccessCode.OK,
+    event,
+    "Event successfully fetched."
+  );
+
+  res.status(response.statusCode).json(response);
+};
+
 export {
   createEvent,
   createCategory,
@@ -356,4 +410,5 @@ export {
   getTicketsByEventId,
   getEvents,
   deleteTicket,
+  getEventById,
 };

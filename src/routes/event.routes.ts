@@ -53,4 +53,6 @@ router
 
 router.route("/").get(asyncHandler(eventController.getEvents));
 
+router.route("/:eventId").get(asyncHandler(eventController.getEventById));
+
 export default router;

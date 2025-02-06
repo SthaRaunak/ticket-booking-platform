@@ -16,6 +16,7 @@ export function asyncHandler(reqHandler: RequestHandler) {
       if (err instanceof HTTPException) {
         exception = err;
       } else {
+        console.error("SERVER ERROR: " + err);
         exception = new InternalException(
           "Something went wrong - Internal Serval Error",
           ErrorCode.INTERNAL_EXCEPTION,
